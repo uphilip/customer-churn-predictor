@@ -1,26 +1,35 @@
-import streamlit as st
-import pandas as pd
-import joblib
-from pathlib import Path
-
-
 # ============================================================
 # CUSTOMER CHURN PREDICTOR
-# AI/ML CAPSTONE PROJECT
+# 3MTT AI/ML CAPSTONE PROJECT
 #
 # Developed by: Chukwuka Uchenna
 #
-# This application uses a trained Logistic Regression model
-# to estimate the probability that a customer will churn.
+# Project Description:
+# This application uses a trained Logistic Regression machine
+# learning model to estimate the probability that a customer
+# will churn based on demographic, service, contract and
+# billing characteristics.
 #
-# The saved machine-learning pipeline contains the required
-# preprocessing steps and the trained classification model.
+# The application is deployed using Streamlit.
 # ============================================================
 
 
-# ------------------------------------------------------------
-# PAGE CONFIGURATION
-# ------------------------------------------------------------
+# ============================================================
+# 1. IMPORT REQUIRED LIBRARIES
+# ============================================================
+
+from pathlib import Path
+
+import joblib
+import pandas as pd
+import streamlit as st
+
+
+# ============================================================
+# 2. PAGE CONFIGURATION
+# ============================================================
+# This must be called before most other Streamlit commands.
+# It controls the browser tab title, icon and page layout.
 
 st.set_page_config(
     page_title="Customer Churn Predictor",
@@ -30,386 +39,69 @@ st.set_page_config(
 )
 
 
-# ------------------------------------------------------------
-# CUSTOM CSS
-# ------------------------------------------------------------
+# ============================================================
+# 3. APPLICATION CONSTANTS
+# ============================================================
 
-st.markdown(
-    """
-    <style>
+# Path to the saved machine-learning model.
+# Path(__file__).parent ensures the application works both
+# locally and when deployed through Streamlit Community Cloud.
 
-    /* -------------------------------------------------------
-       GLOBAL APPLICATION
-       ------------------------------------------------------- */
+BASE_DIR = Path(__file__).resolve().parent
 
-    .stApp {
-        background-color: #f5f7fb;
-    }
-
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-        max-width: 1400px;
-    }
+MODEL_PATH = BASE_DIR / "models" / "customer_churn_model.pkl"
 
 
-    /* -------------------------------------------------------
-       HEADER
-       ------------------------------------------------------- */
-
-    .project-header {
-        background: linear-gradient(
-            135deg,
-            #0f172a 0%,
-            #172554 55%,
-            #1e3a8a 100%
-        );
-
-        padding: 35px 40px;
-        border-radius: 18px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 25px rgba(15, 23, 42, 0.12);
-    }
-
-    .project-title {
-        color: #ffffff;
-        font-size: 38px;
-        font-weight: 800;
-        margin-bottom: 5px;
-        letter-spacing: -0.5px;
-    }
-
-    .project-subtitle {
-        color: #cbd5e1;
-        font-size: 17px;
-        margin-bottom: 18px;
-    }
-
-    .developer-name {
-        color: #ffffff;
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-
-
-    /* -------------------------------------------------------
-       SECTION HEADINGS
-       ------------------------------------------------------- */
-
-    .section-heading {
-        font-size: 23px;
-        font-weight: 750;
-        color: #0f172a;
-        margin-top: 15px;
-        margin-bottom: 15px;
-    }
-
-
-    /* -------------------------------------------------------
-       INFORMATION CARDS
-       ------------------------------------------------------- */
-
-    .info-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 22px;
-        box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
-        margin-bottom: 15px;
-    }
-
-
-    /* -------------------------------------------------------
-       RESULT PANEL
-       ------------------------------------------------------- */
-
-    .risk-panel {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 32px;
-        margin-top: 15px;
-        margin-bottom: 25px;
-        box-shadow: 0 5px 20px rgba(15, 23, 42, 0.06);
-    }
-
-    .risk-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-    }
-
-    .risk-header-title {
-        font-size: 14px;
-        font-weight: 800;
-        letter-spacing: 1.2px;
-        color: #64748b;
-    }
-
-    .risk-header-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: #94a3b8;
-    }
-
-    .risk-level {
-        font-size: 15px;
-        font-weight: 800;
-        letter-spacing: 1.2px;
-        margin-bottom: 5px;
-    }
-
-    .risk-percentage {
-        font-size: 60px;
-        line-height: 1.05;
-        font-weight: 850;
-        color: #0f172a;
-        margin-bottom: 5px;
-    }
-
-    .risk-caption {
-        font-size: 16px;
-        color: #64748b;
-        margin-bottom: 22px;
-    }
-
-    .risk-track {
-        width: 100%;
-        height: 11px;
-        background: #e2e8f0;
-        border-radius: 20px;
-        overflow: hidden;
-        margin-bottom: 22px;
-    }
-
-    .risk-fill {
-        height: 100%;
-        border-radius: 20px;
-    }
-
-    .risk-explanation {
-        font-size: 15px;
-        line-height: 1.7;
-        color: #475569;
-        max-width: 900px;
-    }
-
-
-    /* -------------------------------------------------------
-       SUMMARY CARDS
-       ------------------------------------------------------- */
-
-    .summary-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 13px;
-        padding: 20px;
-        box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
-    }
-
-    .summary-label {
-        font-size: 12px;
-        font-weight: 800;
-        color: #64748b;
-        letter-spacing: 0.8px;
-        margin-bottom: 7px;
-    }
-
-    .summary-value {
-        font-size: 30px;
-        font-weight: 800;
-    }
-
-
-    /* -------------------------------------------------------
-       MODEL INSIGHT CARDS
-       ------------------------------------------------------- */
-
-    .insight-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 22px;
-        height: 100%;
-        box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
-    }
-
-    .insight-title {
-        font-size: 15px;
-        font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 15px;
-    }
-
-    .insight-item {
-        font-size: 14px;
-        color: #475569;
-        padding: 7px 0;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-
-    /* -------------------------------------------------------
-       BUTTON
-       ------------------------------------------------------- */
-
-    div.stButton > button {
-        width: 100%;
-        height: 55px;
-        border-radius: 12px;
-        font-size: 17px;
-        font-weight: 800;
-        letter-spacing: 0.3px;
-    }
-
-
-    /* -------------------------------------------------------
-       SIDEBAR
-       ------------------------------------------------------- */
-
-    section[data-testid="stSidebar"] {
-        background-color: #0f172a;
-    }
-
-    section[data-testid="stSidebar"] * {
-        color: #f8fafc;
-    }
-
-
-    /* -------------------------------------------------------
-       FOOTER
-       ------------------------------------------------------- */
-
-    .footer {
-        text-align: center;
-        color: #94a3b8;
-        font-size: 13px;
-        padding-top: 15px;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# ------------------------------------------------------------
-# MODEL PATH
-# ------------------------------------------------------------
-
-MODEL_PATH = Path("models/customer_churn_model.pkl")
-
-
-# ------------------------------------------------------------
-# LOAD MODEL
-# ------------------------------------------------------------
+# ============================================================
+# 4. LOAD THE TRAINED MACHINE-LEARNING MODEL
+# ============================================================
+# The model was trained previously in the Jupyter notebook.
+# It is loaded here so that the Streamlit application can make
+# predictions without retraining the model every time the app
+# starts.
 
 @st.cache_resource
 def load_model():
-
     """
-    Loads the saved machine-learning pipeline.
+    Load the trained machine-learning model from disk.
 
-    The pipeline contains the preprocessing and trained
-    Logistic Regression classifier used by the application.
+    Streamlit's cache_resource prevents the model from being
+    loaded repeatedly every time a user interacts with the app.
     """
+
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(
+            f"Model file was not found at: {MODEL_PATH}"
+        )
 
     return joblib.load(MODEL_PATH)
 
 
+# Try to load the model.
 try:
-
     model = load_model()
 
-except FileNotFoundError:
+except Exception as error:
+    st.error("The trained machine-learning model could not be loaded.")
 
-    st.error(
-        "Model file not found. Please confirm that "
-        "'customer_churn_model.pkl' is located inside "
-        "the 'models' folder."
+    st.info(
+        "Please confirm that the file "
+        "'customer_churn_model.pkl' exists inside the models folder."
     )
+
+    st.code(str(error))
 
     st.stop()
 
 
-# ------------------------------------------------------------
-# SIDEBAR
-# ------------------------------------------------------------
-
-with st.sidebar:
-
-    st.markdown(
-        """
-        <h2>📊 Churn Predictor</h2>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown("---")
-
-    st.markdown(
-        """
-        ### Project Information
-
-        **Project:** Customer Churn Predictor
-
-        **Field:** Artificial Intelligence / Machine Learning
-
-        **Model:** Logistic Regression
-
-        **Developer:** Chukwuka Uchenna
-        """
-    )
-
-    st.markdown("---")
-
-    st.markdown(
-        """
-        ### Model Performance
-
-        **Accuracy:** 73.81%
-
-        **Precision:** 50.43%
-
-        **Recall:** 78.34%
-
-        **F1-Score:** 61.36%
-
-        **ROC-AUC:** 84.16%
-        """
-    )
-
-    st.markdown("---")
-
-    st.markdown(
-        """
-        ### Risk Classification
-
-        🔴 **High:** ≥ 70%
-
-        🟡 **Medium:** 40–69%
-
-        🟢 **Low:** < 40%
-        """
-    )
-
-    st.markdown("---")
-
-    st.caption(
-        "AI/ML Capstone Project"
-    )
-
-
-# ------------------------------------------------------------
-# MAIN HEADER
-# ------------------------------------------------------------
+# ============================================================
+# 5. APPLICATION HEADER
+# ============================================================
 
 st.title("📊 Customer Churn Predictor")
 
-st.markdown(
-    "**Machine Learning-Based Customer Retention Risk Analysis**"
+st.subheader(
+    "Machine Learning-Based Customer Retention Risk Analysis"
 )
 
 st.caption(
@@ -419,730 +111,706 @@ st.caption(
 st.divider()
 
 
-st.markdown(
-    """
-    This application estimates the probability that a customer
-    will discontinue a service based on demographic, service,
-    contract and billing characteristics.
-    """
+# ============================================================
+# 6. PROJECT INTRODUCTION
+# ============================================================
+# This section explains the purpose of the application to a
+# person using the system for the first time.
+
+with st.expander("ℹ️ About this project", expanded=False):
+
+    st.write(
+        """
+        **Customer Churn Predictor** is a supervised machine-learning
+        application designed to estimate the likelihood that a customer
+        will leave a service.
+
+        The system uses customer demographic, service, contract and
+        billing characteristics as input variables. These characteristics
+        are passed to a previously trained Logistic Regression model,
+        which produces a churn probability.
+
+        The prediction is intended to support customer retention analysis.
+        It should be interpreted as a model-based risk estimate rather
+        than a guarantee of future customer behaviour.
+        """
+    )
+
+
+# ============================================================
+# 7. SIDEBAR
+# ============================================================
+
+with st.sidebar:
+
+    st.header("🎯 Prediction Settings")
+
+    st.write(
+        """
+        Enter the customer's information below.
+
+        The trained machine-learning model will use these characteristics
+        to estimate the customer's probability of churn.
+        """
+    )
+
+    st.divider()
+
+    st.info(
+        """
+        **Model:** Logistic Regression
+
+        **Task:** Binary Classification
+
+        **Target:** Customer Churn
+
+        **ROC-AUC:** 0.8416
+        """
+    )
+
+    st.divider()
+
+    st.caption("3MTT AI/ML Capstone Project")
+
+    st.caption("Developed by Chukwuka Uchenna")
+
+
+# ============================================================
+# 8. CUSTOMER INFORMATION
+# ============================================================
+
+st.header("👤 Customer Information")
+
+st.write(
+    "Provide the customer's demographic and relationship information."
 )
+
+col1, col2, col3 = st.columns(3)
+
+
+with col1:
+
+    gender = st.selectbox(
+        "Gender",
+        ["Female", "Male"]
+    )
+
+    senior_citizen = st.selectbox(
+        "Senior Citizen",
+        ["No", "Yes"]
+    )
+
+
+with col2:
+
+    partner = st.selectbox(
+        "Partner",
+        ["No", "Yes"]
+    )
+
+    dependents = st.selectbox(
+        "Dependents",
+        ["No", "Yes"]
+    )
+
+
+with col3:
+
+    tenure = st.number_input(
+        "Tenure (months)",
+        min_value=0,
+        max_value=100,
+        value=12,
+        step=1
+    )
 
 
 st.divider()
 
 
 # ============================================================
-# CUSTOMER INPUT SECTION
+# 9. TELEPHONE AND INTERNET SERVICES
 # ============================================================
 
-st.markdown(
-    '<div class="section-heading">Customer Information</div>',
-    unsafe_allow_html=True
+st.header("📡 Service Information")
+
+col1, col2, col3 = st.columns(3)
+
+
+with col1:
+
+    phone_service = st.selectbox(
+        "Phone Service",
+        ["Yes", "No"]
+    )
+
+    multiple_lines = st.selectbox(
+        "Multiple Lines",
+        ["No", "Yes", "No phone service"]
+    )
+
+
+with col2:
+
+    internet_service = st.selectbox(
+        "Internet Service",
+        ["DSL", "Fiber optic", "No"]
+    )
+
+    online_security = st.selectbox(
+        "Online Security",
+        ["No", "Yes", "No internet service"]
+    )
+
+
+with col3:
+
+    online_backup = st.selectbox(
+        "Online Backup",
+        ["No", "Yes", "No internet service"]
+    )
+
+    device_protection = st.selectbox(
+        "Device Protection",
+        ["No", "Yes", "No internet service"]
+    )
+
+
+st.divider()
+
+
+# ============================================================
+# 10. ADDITIONAL SERVICES
+# ============================================================
+
+st.header("🛠️ Additional Services")
+
+col1, col2, col3 = st.columns(3)
+
+
+with col1:
+
+    tech_support = st.selectbox(
+        "Technical Support",
+        ["No", "Yes", "No internet service"]
+    )
+
+
+with col2:
+
+    streaming_tv = st.selectbox(
+        "Streaming TV",
+        ["No", "Yes", "No internet service"]
+    )
+
+
+with col3:
+
+    streaming_movies = st.selectbox(
+        "Streaming Movies",
+        ["No", "Yes", "No internet service"]
+    )
+
+
+st.divider()
+
+
+# ============================================================
+# 11. CONTRACT AND BILLING INFORMATION
+# ============================================================
+
+st.header("💳 Contract & Billing Information")
+
+col1, col2, col3 = st.columns(3)
+
+
+with col1:
+
+    contract = st.selectbox(
+        "Contract",
+        [
+            "Month-to-month",
+            "One year",
+            "Two year"
+        ]
+    )
+
+
+with col2:
+
+    paperless_billing = st.selectbox(
+        "Paperless Billing",
+        ["Yes", "No"]
+    )
+
+
+with col3:
+
+    payment_method = st.selectbox(
+        "Payment Method",
+        [
+            "Electronic check",
+            "Mailed check",
+            "Bank transfer (automatic)",
+            "Credit card (automatic)"
+        ]
+    )
+
+
+col1, col2 = st.columns(2)
+
+
+with col1:
+
+    monthly_charges = st.number_input(
+        "Monthly Charges",
+        min_value=0.0,
+        max_value=500.0,
+        value=70.0,
+        step=0.01
+    )
+
+
+with col2:
+
+    total_charges = st.number_input(
+        "Total Charges",
+        min_value=0.0,
+        max_value=100000.0,
+        value=840.0,
+        step=0.01
+    )
+
+
+st.divider()
+
+
+# ============================================================
+# 12. CREATE CUSTOMER DATAFRAME
+# ============================================================
+# The model expects the same feature structure used during
+# training.
+#
+# customerID is deliberately excluded because it is an
+# identifier rather than a meaningful predictive feature.
+#
+# TotalCharges is converted to a numerical value because it was
+# originally stored as text in the raw dataset.
+
+customer_data = pd.DataFrame(
+    {
+        "gender": [gender],
+        "SeniorCitizen": [
+            1 if senior_citizen == "Yes" else 0
+        ],
+        "Partner": [partner],
+        "Dependents": [dependents],
+        "tenure": [tenure],
+        "PhoneService": [phone_service],
+        "MultipleLines": [multiple_lines],
+        "InternetService": [internet_service],
+        "OnlineSecurity": [online_security],
+        "OnlineBackup": [online_backup],
+        "DeviceProtection": [device_protection],
+        "TechSupport": [tech_support],
+        "StreamingTV": [streaming_tv],
+        "StreamingMovies": [streaming_movies],
+        "Contract": [contract],
+        "PaperlessBilling": [paperless_billing],
+        "PaymentMethod": [payment_method],
+        "MonthlyCharges": [monthly_charges],
+        "TotalCharges": [total_charges]
+    }
 )
 
 
-tab_customer, tab_services, tab_account = st.tabs(
-    [
-        "👤 Customer Profile",
-        "📡 Services",
-        "💳 Account & Billing"
-    ]
+# ============================================================
+# 13. DISPLAY ENTERED CUSTOMER PROFILE
+# ============================================================
+# This gives the user a quick opportunity to review the
+# information before running the prediction.
+
+with st.expander("🔎 Review Customer Information", expanded=False):
+
+    st.dataframe(
+        customer_data,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+# ============================================================
+# 14. PREDICTION BUTTON
+# ============================================================
+
+st.header("🤖 Machine Learning Prediction")
+
+st.write(
+    "Click the button below to analyse the supplied customer profile."
 )
-
-
-# ------------------------------------------------------------
-# CUSTOMER PROFILE
-# ------------------------------------------------------------
-
-with tab_customer:
-
-    col1, col2, col3 = st.columns(3)
-
-
-    with col1:
-
-        gender = st.selectbox(
-            "Gender",
-            [
-                "Female",
-                "Male"
-            ]
-        )
-
-        senior_citizen = st.selectbox(
-            "Senior Citizen",
-            [
-                0,
-                1
-            ],
-            format_func=lambda x:
-                "Yes" if x == 1 else "No"
-        )
-
-
-    with col2:
-
-        partner = st.selectbox(
-            "Partner",
-            [
-                "Yes",
-                "No"
-            ]
-        )
-
-        dependents = st.selectbox(
-            "Dependents",
-            [
-                "Yes",
-                "No"
-            ]
-        )
-
-
-    with col3:
-
-        tenure = st.number_input(
-            "Tenure (months)",
-            min_value=0,
-            max_value=72,
-            value=12,
-            step=1
-        )
-
-
-# ------------------------------------------------------------
-# SERVICES
-# ------------------------------------------------------------
-
-with tab_services:
-
-    col1, col2 = st.columns(2)
-
-
-    with col1:
-
-        phone_service = st.selectbox(
-            "Phone Service",
-            [
-                "Yes",
-                "No"
-            ]
-        )
-
-        multiple_lines = st.selectbox(
-            "Multiple Lines",
-            [
-                "Yes",
-                "No",
-                "No phone service"
-            ]
-        )
-
-        internet_service = st.selectbox(
-            "Internet Service",
-            [
-                "DSL",
-                "Fiber optic",
-                "No"
-            ]
-        )
-
-        online_security = st.selectbox(
-            "Online Security",
-            [
-                "Yes",
-                "No",
-                "No internet service"
-            ]
-        )
-
-
-    with col2:
-
-        online_backup = st.selectbox(
-            "Online Backup",
-            [
-                "Yes",
-                "No",
-                "No internet service"
-            ]
-        )
-
-        device_protection = st.selectbox(
-            "Device Protection",
-            [
-                "Yes",
-                "No",
-                "No internet service"
-            ]
-        )
-
-        tech_support = st.selectbox(
-            "Technical Support",
-            [
-                "Yes",
-                "No",
-                "No internet service"
-            ]
-        )
-
-        streaming_tv = st.selectbox(
-            "Streaming TV",
-            [
-                "Yes",
-                "No",
-                "No internet service"
-            ]
-        )
-
-        streaming_movies = st.selectbox(
-            "Streaming Movies",
-            [
-                "Yes",
-                "No",
-                "No internet service"
-            ]
-        )
-
-
-# ------------------------------------------------------------
-# ACCOUNT & BILLING
-# ------------------------------------------------------------
-
-with tab_account:
-
-    col1, col2 = st.columns(2)
-
-
-    with col1:
-
-        contract = st.selectbox(
-            "Contract",
-            [
-                "Month-to-month",
-                "One year",
-                "Two year"
-            ]
-        )
-
-        paperless_billing = st.selectbox(
-            "Paperless Billing",
-            [
-                "Yes",
-                "No"
-            ]
-        )
-
-
-    with col2:
-
-        payment_method = st.selectbox(
-            "Payment Method",
-            [
-                "Electronic check",
-                "Mailed check",
-                "Bank transfer (automatic)",
-                "Credit card (automatic)"
-            ]
-        )
-
-
-    col1, col2 = st.columns(2)
-
-
-    with col1:
-
-        monthly_charges = st.number_input(
-            "Monthly Charges",
-            min_value=0.0,
-            max_value=200.0,
-            value=70.0,
-            step=0.01
-        )
-
-
-    with col2:
-
-        total_charges = st.number_input(
-            "Total Charges",
-            min_value=0.0,
-            max_value=10000.0,
-            value=1000.0,
-            step=0.01
-        )
-
-
-# ------------------------------------------------------------
-# PREDICTION BUTTON
-# ------------------------------------------------------------
-
-st.write("")
-
-st.markdown(
-    '<div class="section-heading">Generate Prediction</div>',
-    unsafe_allow_html=True
-)
-
 
 predict_button = st.button(
-    "🚀  PREDICT CUSTOMER CHURN",
+    "🔍 Predict Customer Churn",
     type="primary",
     use_container_width=True
 )
 
 
 # ============================================================
-# MACHINE LEARNING PREDICTION
+# 15. RUN MODEL PREDICTION
 # ============================================================
 
 if predict_button:
 
-    # --------------------------------------------------------
-    # CREATE INPUT DATAFRAME
-    # --------------------------------------------------------
+    try:
 
-    customer_data = pd.DataFrame({
+        # --------------------------------------------------------
+        # Generate the predicted class.
+        # --------------------------------------------------------
 
-        "gender": [gender],
-
-        "SeniorCitizen": [senior_citizen],
-
-        "Partner": [partner],
-
-        "Dependents": [dependents],
-
-        "tenure": [tenure],
-
-        "PhoneService": [phone_service],
-
-        "MultipleLines": [multiple_lines],
-
-        "InternetService": [internet_service],
-
-        "OnlineSecurity": [online_security],
-
-        "OnlineBackup": [online_backup],
-
-        "DeviceProtection": [device_protection],
-
-        "TechSupport": [tech_support],
-
-        "StreamingTV": [streaming_tv],
-
-        "StreamingMovies": [streaming_movies],
-
-        "Contract": [contract],
-
-        "PaperlessBilling": [paperless_billing],
-
-        "PaymentMethod": [payment_method],
-
-        "MonthlyCharges": [monthly_charges],
-
-        "TotalCharges": [total_charges]
-    })
+        prediction = model.predict(customer_data)[0]
 
 
-    # --------------------------------------------------------
-    # GENERATE MODEL PREDICTION
-    # --------------------------------------------------------
+        # --------------------------------------------------------
+        # Generate prediction probabilities.
+        #
+        # For binary classification, predict_proba returns:
+        #
+        # [probability of class 0, probability of class 1]
+        #
+        # We identify the "Yes" class from model.classes_ instead
+        # of assuming that it is always in a specific position.
+        # --------------------------------------------------------
 
-    prediction = model.predict(
-        customer_data
-    )[0]
+        probabilities = model.predict_proba(customer_data)[0]
+
+        classes = list(model.classes_)
+
+        if "Yes" in classes:
+
+            churn_index = classes.index("Yes")
+
+        elif 1 in classes:
+
+            churn_index = classes.index(1)
+
+        else:
+
+            # Fallback for a binary classifier where the positive
+            # class is represented by the second class.
+
+            churn_index = 1
 
 
-    # --------------------------------------------------------
-    # GENERATE CHURN PROBABILITY
-    # --------------------------------------------------------
+        churn_probability = float(
+            probabilities[churn_index]
+        )
 
-    churn_probability = model.predict_proba(
-        customer_data
-    )[0][1]
+        retention_probability = 1.0 - churn_probability
 
 
-    churn_percentage = churn_probability * 100
+        # --------------------------------------------------------
+        # Convert probabilities to percentages.
+        # --------------------------------------------------------
 
-    stay_percentage = 100 - churn_percentage
+        churn_percentage = churn_probability * 100
+
+        retention_percentage = retention_probability * 100
 
 
-    # --------------------------------------------------------
-    # DETERMINE RISK LEVEL
-    # --------------------------------------------------------
+        # ========================================================
+        # 16. DETERMINE RISK LEVEL
+        # ========================================================
+        #
+        # These thresholds are presentation thresholds used to
+        # translate the probability into an understandable risk
+        # category.
+        #
+        # They do not retrain or modify the machine-learning model.
+        # ========================================================
 
-    if churn_percentage >= 70:
+        if churn_probability >= 0.70:
 
-        risk_level = "HIGH"
+            risk_level = "HIGH RISK"
 
-        risk_colour = "#dc2626"
+            risk_message = (
+                "The customer shows a high predicted likelihood of "
+                "churning. Retention action may deserve priority."
+            )
 
-        risk_message = (
-            "The customer is classified as high risk based "
-            "on the characteristics supplied to the trained "
-            "machine-learning model. The predicted probability "
-            "of churn is substantially higher than the "
-            "probability of retention."
+        elif churn_probability >= 0.40:
+
+            risk_level = "MEDIUM RISK"
+
+            risk_message = (
+                "The customer shows a moderate predicted likelihood "
+                "of churning. The customer profile may benefit from "
+                "closer monitoring."
+            )
+
+        else:
+
+            risk_level = "LOW RISK"
+
+            risk_message = (
+                "The customer shows a relatively low predicted "
+                "likelihood of churning based on the supplied profile."
+            )
+
+
+        # ========================================================
+        # 17. DISPLAY MAIN RESULT
+        # ========================================================
+
+        st.divider()
+
+        st.header("📊 Churn Risk Assessment")
+
+        # Use Streamlit's native components rather than manually
+        # injecting HTML. This prevents raw HTML tags from appearing
+        # in the browser.
+
+        if risk_level == "HIGH RISK":
+
+            st.error(
+                f"🔴 {risk_level}"
+            )
+
+        elif risk_level == "MEDIUM RISK":
+
+            st.warning(
+                f"🟠 {risk_level}"
+            )
+
+        else:
+
+            st.success(
+                f"🟢 {risk_level}"
+            )
+
+
+        # --------------------------------------------------------
+        # Main probability metric
+        # --------------------------------------------------------
+
+        st.metric(
+            label="Estimated Probability of Customer Churn",
+            value=f"{churn_percentage:.1f}%"
         )
 
 
-    elif churn_percentage >= 40:
+        # --------------------------------------------------------
+        # Probability progress bar
+        # --------------------------------------------------------
 
-        risk_level = "MEDIUM"
-
-        risk_colour = "#d97706"
-
-        risk_message = (
-            "The customer falls within the medium-risk range. "
-            "The model identifies a meaningful possibility of "
-            "churn, although the prediction is less decisive "
-            "than a high-risk classification."
+        st.progress(
+            min(max(churn_probability, 0.0), 1.0)
         )
 
 
-    else:
-
-        risk_level = "LOW"
-
-        risk_colour = "#16a34a"
-
-        risk_message = (
-            "The customer is classified as low risk. The model "
-            "estimates a higher probability of the customer "
-            "remaining with the service than discontinuing it."
+        st.caption(
+            "The probability represents the output of the trained "
+            "Logistic Regression model."
         )
 
 
-    # ========================================================
-    # PREDICTION RESULT
-    # ========================================================
+        # --------------------------------------------------------
+        # Explanation
+        # --------------------------------------------------------
 
-    st.divider()
-
-    st.markdown(
-        '<div class="section-heading">Prediction Result</div>',
-        unsafe_allow_html=True
-    )
-
-
-    # --------------------------------------------------------
-    # PROFESSIONAL RISK ASSESSMENT PANEL
-    # --------------------------------------------------------
-
-    st.markdown(
-        f"""
-        <div class="risk-panel"
-             style="border-left: 6px solid {risk_colour};">
-
-            <div class="risk-header">
-
-                <div class="risk-header-title">
-                    CHURN RISK ASSESSMENT
-                </div>
-
-                <div class="risk-header-label">
-                    LOGISTIC REGRESSION OUTPUT
-                </div>
-
-            </div>
-
-
-            <div class="risk-level"
-                 style="color: {risk_colour};">
-
-                {risk_level} RISK
-
-            </div>
-
-
-            <div class="risk-percentage">
-
-                {churn_percentage:.1f}%
-
-            </div>
-
-
-            <div class="risk-caption">
-
-                Estimated probability of customer churn
-
-            </div>
-
-
-            <div class="risk-track">
-
-                <div class="risk-fill"
-                     style="
-                     width: {churn_percentage}%;
-                     background: {risk_colour};
-                     ">
-                </div>
-
-            </div>
-
-
-            <div class="risk-explanation">
-
-                {risk_message}
-
-            </div>
-
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-    # ========================================================
-    # PROBABILITY SUMMARY
-    # ========================================================
-
-    col1, col2 = st.columns(2)
-
-
-    with col1:
-
-        st.markdown(
-            f"""
-            <div class="summary-card">
-
-                <div class="summary-label">
-                    CHURN PROBABILITY
-                </div>
-
-                <div class="summary-value"
-                     style="color: {risk_colour};">
-
-                    {churn_percentage:.1f}%
-
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.info(
+            risk_message
         )
 
 
-    with col2:
+        # ========================================================
+        # 18. PROBABILITY COMPARISON
+        # ========================================================
 
-        st.markdown(
-            f"""
-            <div class="summary-card">
+        st.subheader("Probability Summary")
 
-                <div class="summary-label">
-                    RETENTION PROBABILITY
-                </div>
+        col1, col2 = st.columns(2)
 
-                <div class="summary-value"
-                     style="color: #16a34a;">
 
-                    {stay_percentage:.1f}%
+        with col1:
 
-                </div>
+            st.metric(
+                label="🔴 Churn Probability",
+                value=f"{churn_percentage:.1f}%"
+            )
 
-            </div>
-            """,
-            unsafe_allow_html=True
+
+        with col2:
+
+            st.metric(
+                label="🟢 Retention Probability",
+                value=f"{retention_percentage:.1f}%"
+            )
+
+
+        # ========================================================
+        # 19. MODEL INSIGHTS
+        # ========================================================
+        # These insights explain common patterns identified from
+        # the model's feature coefficients during model analysis.
+        #
+        # They are presented as general model-associated factors,
+        # not as causal claims.
+        # ========================================================
+
+        st.subheader("🧠 Model Insights")
+
+        col1, col2 = st.columns(2)
+
+
+        with col1:
+
+            st.markdown(
+                """
+                **↑ Factors Associated With Higher Churn**
+
+                - Fiber optic internet service
+                - Month-to-month contract
+                - Electronic check payment method
+                - Absence of online security
+                - Absence of technical support
+                - Streaming service usage
+                """
+            )
+
+
+        with col2:
+
+            st.markdown(
+                """
+                **↓ Factors Associated With Lower Churn**
+
+                - Longer customer tenure
+                - Two-year contract
+                - DSL internet service
+                - Established customer relationship
+                - Longer-term contractual commitment
+                """
+            )
+
+
+        # ========================================================
+        # 20. INTERPRETATION NOTE
+        # ========================================================
+
+        st.subheader("📌 Interpretation")
+
+        if churn_probability >= 0.70:
+
+            st.write(
+                f"""
+                The model estimates a **{churn_percentage:.1f}%**
+                probability of churn and a **{retention_percentage:.1f}%**
+                probability of retention.
+
+                Based on the application's predefined risk thresholds,
+                this customer is classified as **high churn risk**.
+                """
+            )
+
+        elif churn_probability >= 0.40:
+
+            st.write(
+                f"""
+                The model estimates a **{churn_percentage:.1f}%**
+                probability of churn and a **{retention_percentage:.1f}%**
+                probability of retention.
+
+                Based on the application's predefined risk thresholds,
+                this customer is classified as **medium churn risk**.
+                """
+            )
+
+        else:
+
+            st.write(
+                f"""
+                The model estimates a **{churn_percentage:.1f}%**
+                probability of churn and a **{retention_percentage:.1f}%**
+                probability of retention.
+
+                Based on the application's predefined risk thresholds,
+                this customer is classified as **low churn risk**.
+                """)
+
+
+        # ========================================================
+        # 21. TECHNICAL INFORMATION
+        # ========================================================
+
+        with st.expander("🔧 Technical Model Information"):
+
+            st.write(
+                """
+                **Machine Learning Approach**
+
+                The application uses supervised machine learning for
+                binary customer churn classification.
+
+                **Selected Model**
+
+                Logistic Regression was selected because it achieved
+                strong churn recall and ROC-AUC performance during
+                model evaluation.
+
+                **Evaluation Results**
+
+                - Accuracy: 73.81%
+                - Precision: 50.43%
+                - Recall: 78.34%
+                - F1-score: 61.36%
+                - ROC-AUC: 84.16%
+
+                **Important Interpretation**
+
+                Accuracy was not used as the only model-selection
+                criterion. Recall was particularly important because
+                identifying customers who actually churn is an important
+                objective of a customer retention system.
+                """
+            )
+
+
+    # ============================================================
+    # 22. HANDLE PREDICTION ERRORS
+    # ============================================================
+
+    except Exception as error:
+
+        st.error(
+            "The prediction could not be completed."
         )
 
-
-    # ========================================================
-    # MODEL INSIGHTS
-    # ========================================================
-
-    st.write("")
-
-    st.markdown(
-        '<div class="section-heading">Model Insights</div>',
-        unsafe_allow_html=True
-    )
-
-
-    col1, col2 = st.columns(2)
-
-
-    with col1:
-
-        st.markdown(
-            """
-            <div class="insight-card">
-
-                <div class="insight-title">
-                    ↑ Factors Associated With Higher Churn
-                </div>
-
-                <div class="insight-item">
-                    Fiber optic internet service
-                </div>
-
-                <div class="insight-item">
-                    Month-to-month contract
-                </div>
-
-                <div class="insight-item">
-                    Electronic check payment method
-                </div>
-
-                <div class="insight-item">
-                    Absence of online security
-                </div>
-
-                <div class="insight-item">
-                    Absence of technical support
-                </div>
-
-                <div class="insight-item">
-                    Streaming service usage
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.warning(
+            "Please check that the input variables match the "
+            "features used when the machine-learning model was trained."
         )
 
+        # Technical error details are placed inside an expander
+        # so ordinary users do not see unnecessary technical output.
 
-    with col2:
+        with st.expander("Technical error details"):
 
-        st.markdown(
-            """
-            <div class="insight-card">
-
-                <div class="insight-title">
-                    ↓ Factors Associated With Lower Churn
-                </div>
-
-                <div class="insight-item">
-                    Longer customer tenure
-                </div>
-
-                <div class="insight-item">
-                    Two-year contract
-                </div>
-
-                <div class="insight-item">
-                    DSL internet service
-                </div>
-
-                <div class="insight-item">
-                    Established customer relationship
-                </div>
-
-                <div class="insight-item">
-                    Longer-term contractual commitment
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-
-    # ========================================================
-    # PROBABILITY VISUALISATION
-    # ========================================================
-
-    st.write("")
-
-    st.markdown(
-        '<div class="section-heading">Probability Distribution</div>',
-        unsafe_allow_html=True
-    )
-
-
-    probability_data = pd.DataFrame(
-        {
-            "Outcome": [
-                "Retain Customer",
-                "Customer Churn"
-            ],
-
-            "Probability": [
-                stay_percentage,
-                churn_percentage
-            ]
-        }
-    )
-
-
-    st.bar_chart(
-        probability_data.set_index("Outcome")
-    )
-
-
-    # ========================================================
-    # CUSTOMER INPUT SUMMARY
-    # ========================================================
-
-    st.write("")
-
-    with st.expander("🔎 View Customer Input Data"):
-
-        st.dataframe(
-            customer_data.T.rename(
-                columns={
-                    0: "Value"
-                }
-            ),
-            use_container_width=True
-        )
-
-
-    # ========================================================
-    # MODEL INTERPRETATION
-    # ========================================================
-
-    st.write("")
-
-    with st.expander("🧠 How Should This Prediction Be Interpreted?"):
-
-        st.markdown(
-            f"""
-            ### Prediction
-
-            The trained Logistic Regression model estimates a
-            **{churn_percentage:.1f}% probability of churn** for
-            the customer profile entered above.
-
-            ### Important distinction
-
-            This percentage represents a **model probability
-            estimate**, not a guarantee that the customer will
-            actually churn.
-
-            The prediction is based on patterns learned from
-            historical customer records.
-
-            ### Model performance
-
-            During evaluation, the selected model achieved:
-
-            - **Accuracy:** 73.81%
-            - **Precision:** 50.43%
-            - **Recall:** 78.34%
-            - **F1-score:** 61.36%
-            - **ROC-AUC:** 84.16%
-
-            The relatively strong recall means the model is able
-            to identify a substantial proportion of customers
-            who actually churned in the test dataset.
-
-            Therefore, the system can serve as a decision-support
-            tool for identifying customers who may require further
-            retention analysis.
-            """
-        )
+            st.code(
+                str(error)
+            )
 
 
 # ============================================================
-# FOOTER
+# 23. FOOTER
 # ============================================================
 
 st.divider()
 
-st.markdown(
-    """
-    **Customer Churn Predictor**
+st.caption(
+    "Customer Churn Predictor • 3MTT AI/ML Capstone Project"
+)
 
-    3MTT AI/ML Capstone Project  
-    Developed by **Chukwuka Uchenna**
-    """
+st.caption(
+    "Developed by Chukwuka Uchenna"
 )
