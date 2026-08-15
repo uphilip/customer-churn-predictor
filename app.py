@@ -25,7 +25,10 @@ st.markdown(
     """
     <style>
 
-    /* Main application background */
+    /* ========================================================
+       GLOBAL APPLICATION THEME
+       ======================================================== */
+
     .stApp {
         background: linear-gradient(
             135deg,
@@ -33,28 +36,82 @@ st.markdown(
             #eef2ff 50%,
             #f8fafc 100%
         );
+
+        color: #1e293b !important;
     }
 
-    /* Main title */
-    h1 {
-        font-weight: 800 !important;
 
-        background: linear-gradient(
-            90deg,
-            #2563eb,
-            #7c3aed
-        );
+    /* ========================================================
+       MAIN CONTENT TEXT
+       ======================================================== */
 
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    .main .block-container {
+        color: #1e293b !important;
     }
 
-    /* Subtitle */
-    h2 {
+    .main .block-container p {
         color: #475569 !important;
     }
 
-    /* Sidebar */
+    .main .block-container label {
+        color: #334155 !important;
+    }
+
+    .main .block-container span {
+        color: inherit;
+    }
+
+
+    /* ========================================================
+       HEADINGS
+       ======================================================== */
+
+    .main h1 {
+        color: #2563eb !important;
+
+        font-weight: 800 !important;
+    }
+
+    .main h2 {
+        color: #334155 !important;
+
+        font-weight: 750 !important;
+    }
+
+    .main h3 {
+        color: #334155 !important;
+
+        font-weight: 700 !important;
+    }
+
+
+    /* ========================================================
+       CAPSTONE HEADER
+       ======================================================== */
+
+    .main-header {
+        background: linear-gradient(
+            135deg,
+            #2563eb 0%,
+            #4f46e5 50%,
+            #7c3aed 100%
+        );
+
+        padding: 30px 35px;
+
+        border-radius: 20px;
+
+        margin-bottom: 28px;
+
+        box-shadow:
+            0 12px 35px rgba(79, 70, 229, 0.25);
+    }
+
+
+    /* ========================================================
+       SIDEBAR
+       ======================================================== */
+
     section[data-testid="stSidebar"] {
         background: linear-gradient(
             180deg,
@@ -65,14 +122,72 @@ st.markdown(
     }
 
     section[data-testid="stSidebar"] * {
-        color: white !important;
+        color: #ffffff !important;
     }
 
     section[data-testid="stSidebar"] hr {
         border-color: rgba(255,255,255,0.20) !important;
     }
 
-    /* Buttons */
+
+    /* ========================================================
+       INPUT LABELS
+       ======================================================== */
+
+    div[data-testid="stWidgetLabel"] p {
+        color: #334155 !important;
+
+        font-weight: 600 !important;
+    }
+
+    div[data-testid="stWidgetLabel"] label {
+        color: #334155 !important;
+    }
+
+
+    /* ========================================================
+       SELECT BOXES
+       ======================================================== */
+
+    div[data-baseweb="select"] {
+        background-color: #ffffff !important;
+
+        border-radius: 10px;
+    }
+
+    div[data-baseweb="select"] * {
+        color: #1e293b !important;
+    }
+
+
+    /* ========================================================
+       NUMBER INPUTS
+       ======================================================== */
+
+    div[data-testid="stNumberInput"] input {
+        background-color: #ffffff !important;
+
+        color: #1e293b !important;
+
+        border-radius: 10px;
+    }
+
+
+    /* ========================================================
+       TEXT INPUTS
+       ======================================================== */
+
+    input {
+        color: #1e293b !important;
+
+        background-color: #ffffff !important;
+    }
+
+
+    /* ========================================================
+       BUTTON
+       ======================================================== */
+
     .stButton > button {
         background: linear-gradient(
             90deg,
@@ -80,7 +195,7 @@ st.markdown(
             #7c3aed
         );
 
-        color: white !important;
+        color: #ffffff !important;
 
         border: none;
 
@@ -89,6 +204,9 @@ st.markdown(
         font-weight: 700;
 
         min-height: 48px;
+
+        box-shadow:
+            0 6px 18px rgba(79, 70, 229, 0.25);
     }
 
     .stButton > button:hover {
@@ -98,12 +216,16 @@ st.markdown(
             #6d28d9
         );
 
-        color: white !important;
+        color: #ffffff !important;
     }
 
-    /* Metric cards */
+
+    /* ========================================================
+       METRIC CARDS
+       ======================================================== */
+
     div[data-testid="metric-container"] {
-        background: white;
+        background: #ffffff !important;
 
         border: 1px solid #e2e8f0;
 
@@ -115,10 +237,84 @@ st.markdown(
             0 6px 18px rgba(15, 23, 42, 0.06);
     }
 
-    /* Expander */
+    div[data-testid="metric-container"] label {
+        color: #64748b !important;
+    }
+
+    div[data-testid="metric-container"] div {
+        color: #1e293b !important;
+    }
+
+
+    /* ========================================================
+       EXPANDER
+       ======================================================== */
+
     div[data-testid="stExpander"] {
-        border-radius: 12px;
+        background: #ffffff !important;
+
         border: 1px solid #e2e8f0;
+
+        border-radius: 12px;
+    }
+
+
+    div[data-testid="stExpander"] * {
+        color: #334155 !important;
+    }
+
+
+    /* ========================================================
+       DATAFRAME
+       ======================================================== */
+
+    div[data-testid="stDataFrame"] {
+        background: #ffffff !important;
+
+        border-radius: 12px;
+    }
+
+
+    /* ========================================================
+       INFORMATION / WARNING / ERROR TEXT
+       ======================================================== */
+
+    div[data-testid="stAlert"] p {
+        color: inherit !important;
+    }
+
+
+    /* ========================================================
+       DIVIDERS
+       ======================================================== */
+
+    hr {
+        border-color: #e2e8f0 !important;
+    }
+
+
+    /* ========================================================
+       FOOTER
+       ======================================================== */
+
+    .footer {
+        background: linear-gradient(
+            90deg,
+            #111827,
+            #312e81
+        );
+
+        color: #c7d2fe;
+
+        text-align: center;
+
+        padding: 22px;
+
+        border-radius: 14px;
+
+        margin-top: 40px;
+
+        line-height: 1.7;
     }
 
     </style>
